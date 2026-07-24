@@ -1,0 +1,130 @@
+/* ============================================================
+   NEXUS AI Operating System — Futuristic UI Utilities
+   ============================================================ */
+
+/* Glass Panel Base */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--t-normal) var(--ease-smooth),
+              box-shadow var(--t-normal) var(--ease-smooth),
+              background var(--t-normal) var(--ease-smooth);
+}
+
+.glass-panel:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.75), 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+/* Glass Interactive Buttons/Cards */
+.glass-interactive {
+  background: rgba(10, 16, 32, 0.45);
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  border-radius: var(--radius-md);
+  transition: all var(--t-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.glass-interactive:hover {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.glass-interactive:active {
+  background: rgba(0, 240, 255, 0.15);
+  transform: translateY(1px);
+}
+
+/* Holographic Button */
+.btn-holographic {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(0, 119, 255, 0.22) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.55);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+  transition: all var(--t-normal) var(--ease-smooth);
+}
+
+.btn-holographic:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(0, 119, 255, 0.4) 100%);
+  border-color: var(--cyan-500);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.45), inset 0 0 10px rgba(0, 240, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-holographic:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.btn-holographic:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(0, 240, 255, 0.2);
+}
+
+/* Holographic Mini-Badges */
+.badge-holographic {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.06);
+  color: var(--cyan-500);
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.4);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.15);
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 240, 255, 0.4);
+}
+
+/* Pulse animation for glowing borders */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+    border-color: rgba(0, 240, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+    border-color: rgba(0, 240, 255, 0.6);
+  }
+}
+
+.glow-active {
+  animation: pulseGlow 3s infinite ease-in-out;
+}

@@ -1,0 +1,85 @@
+/* ============================================================
+   NEXUS AI Operating System — Master Design Token System
+   Inspired by: Iron Man HUD, Apple VisionOS, Tesla UI, Nothing OS, Omniverse
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  /* ── Core Obsidian Palette ── */
+  --obsidian-950: #04060d;
+  --obsidian-900: #060911;
+  --obsidian-800: #0a0f1e;
+  --obsidian-700: #0d1322;
+  --obsidian-600: #111827;
+
+  /* ── 9 Cognitive Core State Palette ── */
+  --state-idle:      #00f0ff;
+  --state-listening: #0077ff;
+  --state-thinking:  #a855f7;
+  --state-planning:  #f97316;
+  --state-searching: #06b6d4;
+  --state-executing: #ef4444;
+  --state-learning:  #10b981;
+  --state-offline:   #94a3b8;
+  --state-error:     #f43f5e;
+
+  /* Glow scale */
+  --glow-idle:      rgba(0, 240, 255, 0.45);
+  --glow-listening: rgba(0, 119, 255, 0.55);
+  --glow-thinking:  rgba(168, 85, 247, 0.50);
+  --glow-planning:  rgba(249, 115, 22, 0.50);
+  --glow-searching: rgba(6, 182, 212, 0.50);
+  --glow-executing: rgba(239, 68, 68, 0.55);
+  --glow-learning:  rgba(16, 185, 129, 0.50);
+  --glow-offline:   rgba(148, 163, 184, 0.30);
+  --glow-error:     rgba(244, 63, 94, 0.60);
+
+  /* ── Glass Surfaces ── */
+  --glass-bg:           rgba(8, 12, 26, 0.72);
+  --glass-bg-hover:     rgba(13, 20, 40, 0.80);
+  --glass-bg-active:    rgba(18, 28, 56, 0.90);
+  --glass-border:       rgba(0, 240, 255, 0.12);
+  --glass-border-hover: rgba(0, 240, 255, 0.35);
+  --glass-blur:         blur(20px) saturate(1.4);
+  --glass-shadow:       0 8px 40px 0 rgba(0, 0, 0, 0.6), 0 0 1px 0 rgba(0, 240, 255, 0.1);
+
+  /* ── Text ── */
+  --text-primary:   #f0f4ff;
+  --text-secondary: #8b97b8;
+  --text-muted:     #4a5568;
+  --text-cyan:      #00f0ff;
+
+  /* ── Typography ── */
+  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Spacing & Radii ── */
+  --radius-sm:   6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --radius-xl:  22px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* ── Motion ── */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fast:   cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast:   0.12s;
+  --t-normal: 0.22s;
+  --t-slow:   0.40s;
+}
+
+/* High Contrast Mode Overrides */
+.high-contrast {
+  --obsidian-950: #000000;
+  --obsidian-900: #000000;
+  --obsidian-800: #0a0a0a;
+  --glass-bg: rgba(0, 0, 0, 0.95);
+  --glass-border: #00f0ff;
+  --text-primary: #ffffff;
+  --text-secondary: #00ffff;
+  --glass-blur: none;
+}
