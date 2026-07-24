@@ -13,6 +13,8 @@ import { Sound } from '../utils/soundEffects';
 interface CognitiveCoreProps {
   state: CognitiveCoreState;
   micActive: boolean;
+  transcript?: string;
+  isSpeaking?: boolean;
   onCoreClick?: () => void;
   onStateSelect?: (s: CognitiveCoreState) => void;
 }
@@ -56,6 +58,8 @@ const ALL_STATES = Object.keys(CFG) as CognitiveCoreState[];
 export const CognitiveCore: React.FC<CognitiveCoreProps> = ({
   state,
   micActive: _micActive,
+  transcript,
+  isSpeaking,
   onCoreClick,
   onStateSelect,
 }) => {
@@ -303,8 +307,8 @@ export const CognitiveCore: React.FC<CognitiveCoreProps> = ({
             {cfg.label}
           </div>
 
-          <div className="text-[10px] font-mono text-slate-400 max-w-[170px] text-center leading-tight">
-            {cfg.sub}
+          <div className="text-[10px] font-mono text-slate-400 max-w-[170px] text-center leading-tight truncate">
+            {transcript ? `"${transcript}"` : isSpeaking ? '🔊 Synthesizing speech...' : cfg.sub}
           </div>
         </div>
       </div>

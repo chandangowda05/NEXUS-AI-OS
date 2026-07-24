@@ -27,15 +27,19 @@ import {
   Bell,
   SlidersHorizontal,
 } from 'lucide-react';
+import { Square, Radio } from 'lucide-react';
 import { SystemMetrics, CognitiveCoreState } from '../types/assistant';
+import { VoiceStatus } from '../types/voice';
 import { Sound } from '../utils/soundEffects';
 
 interface TopBarProps {
   metrics: SystemMetrics;
+  voiceStatus?: VoiceStatus;
   onToggleMic: () => void;
   onToggleSound: () => void;
   onToggleHighContrast: () => void;
   onToggleRightSidebar: () => void;
+  onStopSpeaking?: () => void;
 }
 
 const STATE_STYLES: Record<
@@ -100,10 +104,12 @@ const STATE_STYLES: Record<
 
 export const TopBar: React.FC<TopBarProps> = ({
   metrics,
+  voiceStatus,
   onToggleMic,
   onToggleSound,
   onToggleHighContrast: _onToggleHighContrast,
   onToggleRightSidebar,
+  onStopSpeaking,
 }) => {
   const [timeStr, setTimeStr] = useState('');
   const activeStyle = STATE_STYLES[metrics.aiStatus] ?? STATE_STYLES.IDLE;
@@ -163,6 +169,34 @@ export const TopBar: React.FC<TopBarProps> = ({
           <Sparkles className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
           <span>{metrics.aiStatus}</span>
         </div>
+
+        {/* Voice Active Badge / Speech Cancellation */}
+        {voiceStatus?.isSpeaking && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/40 text-purple-300 text-[11px] animate-pulse">
+            <Radio className="w-3.5 h-3.5 animate-ping text-purple-400" />
+            <span className="font-bold">SPEAKING</span>
+            {onStopSpeaking && (
+              <button
+                onClick={() => {
+                  Sound.playNotification();
+                  onStopSpeaking();
+                }}
+                title="Stop Speech Output"
+                className="ml-1 p-0.5 rounded bg-purple-950 hover:bg-rose-900 text-slate-200 transition-colors cursor-pointer"
+              >
+                <Square className="w-2.5 h-2.5 fill-current" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Voice Listening Badge */}
+        {voiceStatus?.isListening && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[11px] animate-pulse">
+            <Mic className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-bold">LISTENING</span>
+          </div>
+        )}
 
         {/* Current AI Model */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/60 border border-slate-900 text-slate-300 text-[11px]">

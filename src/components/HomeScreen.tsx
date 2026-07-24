@@ -37,6 +37,9 @@ import { Sound } from '../utils/soundEffects';
 interface HomeScreenProps {
   aiStatus: CognitiveCoreState;
   micActive: boolean;
+  transcript?: string;
+  isSpeaking?: boolean;
+  isListening?: boolean;
   onCoreClick: () => void;
   onStateSelect?: (s: CognitiveCoreState) => void;
   onQuickAction: (command: string) => void;
@@ -97,6 +100,9 @@ const SUGGESTION_PILLS = [
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   aiStatus,
   micActive: _micActive,
+  transcript,
+  isSpeaking,
+  isListening,
   onCoreClick,
   onStateSelect,
   onQuickAction,
@@ -129,6 +135,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (transcript) {
+      setPromptText(transcript);
+    }
+  }, [transcript]);
 
   const handlePromptSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,13 +187,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         {/* ── SECTION 2: 400PX COGNITIVE CORE CENTERPIECE ── */}
-        <div className="flex justify-center py-1 shrink-0">
+        <div className="flex flex-col items-center justify-center py-1 shrink-0 space-y-2">
           <CognitiveCore
             state={aiStatus}
             micActive={_micActive}
+            transcript={transcript}
+            isSpeaking={isSpeaking}
             onCoreClick={onCoreClick}
             onStateSelect={onStateSelect}
           />
+          {isListening && (
+            <div className="px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-xs animate-pulse flex items-center gap-2">
+              <Mic className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{transcript ? `"${transcript}"` : 'Listening... Speak your command'}</span>
+            </div>
+          )}
         </div>
 
         {/* ── SECTION 3: CONVERSATION INPUT (ChatGPT-Style AI Prompt Box) ── */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TopBar } from './components/TopBar';
 import { CognitiveCore } from './components/CognitiveCore';
 import { ChatContainer } from './components/ChatContainer';
@@ -17,12 +17,16 @@ import { SettingsPanel } from './components/modules/SettingsPanel';
 import { DeveloperConsole } from './components/modules/DeveloperConsole';
 
 import { SystemMetrics, ChatMessage, NavigationTab, CognitiveCoreState } from './types/assistant';
+import { voiceService } from './services/voiceService';
+import { VoiceStatus } from './types/voice';
 import { Sound } from './utils/soundEffects';
 import './styles/index.css';
 
 export const App: React.FC = () => {
   const [isStartingUp, setIsStartingUp] = useState(true);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>(voiceService.getStatus());
 
   const [metrics, setMetrics] = useState<SystemMetrics>({
     cpuLoad: 16,
@@ -37,7 +41,7 @@ export const App: React.FC = () => {
     networkOnline: true,
     networkLatencyMs: 14,
     aiStatus: 'IDLE',
-    micActive: true,
+    micActive: false,
     soundEnabled: true,
     highContrast: false,
   });
@@ -61,6 +65,39 @@ export const App: React.FC = () => {
       },
     },
   ]);
+
+  // Voice Service Subscriptions
+  useEffect(() => {
+    const unsubStatus = voiceService.subscribe((status) => {
+      setVoiceStatus(status);
+      setMetrics((prev) => ({
+        ...prev,
+        micActive: status.isListening,
+        aiStatus: status.isListening
+          ? 'LISTENING'
+          : status.state === 'error'
+          ? 'ERROR'
+          : status.isSpeaking
+          ? 'THINKING'
+          : prev.aiStatus === 'LISTENING'
+          ? 'IDLE'
+          : prev.aiStatus,
+      }));
+    });
+
+    const unsubTranscript = voiceService.onTranscript((text, isFinal) => {
+      if (isFinal && text.trim()) {
+        if (voiceService.getAutoSendVoiceCommands()) {
+          handleSendMessage(text.trim());
+        }
+      }
+    });
+
+    return () => {
+      unsubStatus();
+      unsubTranscript();
+    };
+  }, []);
 
   // System metrics IPC listener / fallback simulator
   useEffect(() => {
@@ -90,6 +127,15 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  const speakAssistantResponse = useCallback(
+    (text: string) => {
+      if (metrics.soundEnabled) {
+        voiceService.speak(text);
+      }
+    },
+    [metrics.soundEnabled]
+  );
+
   const handleSendMessage = async (text: string) => {
     setShowHomeScreen(false);
     setActiveTab('dashboard');
@@ -106,24 +152,28 @@ export const App: React.FC = () => {
     if (window.electronAPI?.processUserRequest) {
       try {
         const response = await window.electronAPI.processUserRequest(text);
+        const replyText = response.message || 'Processed through Cognitive Multi-Agent Engine.';
         const assistantMsg: ChatMessage = {
           id: `msg-${Date.now() + 1}`,
           sender: 'assistant',
-          content: response.message || 'Processed through Cognitive Multi-Agent Engine.',
+          content: replyText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           actionCard: response.actionCards?.[0],
         };
         setMessages((prev) => [...prev, assistantMsg]);
         Sound.playTaskComplete();
+        speakAssistantResponse(replyText);
       } catch (err: any) {
+        const errorMsgText = `Multi-Agent Orchestrator Error: ${err.message}`;
         const errorMsg: ChatMessage = {
           id: `msg-${Date.now() + 1}`,
           sender: 'system',
-          content: `Multi-Agent Orchestrator Error: ${err.message}`,
+          content: errorMsgText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, errorMsg]);
         Sound.playError();
+        speakAssistantResponse(errorMsgText);
       } finally {
         setMetrics((prev) => ({ ...prev, aiStatus: 'IDLE' }));
       }
@@ -189,16 +239,20 @@ export const App: React.FC = () => {
 
       setMessages((prev) => [...prev, assistantMsg]);
       setMetrics((prev) => ({ ...prev, aiStatus: 'IDLE' }));
+      speakAssistantResponse(reply);
     }, 1200);
   };
 
   const handleToggleMic = () => {
-    setMetrics((prev) => ({ ...prev, micActive: !prev.micActive }));
+    voiceService.toggleListening();
   };
 
   const handleToggleSound = () => {
     const nextSound = !metrics.soundEnabled;
     Sound.setEnabled(nextSound);
+    if (!nextSound) {
+      voiceService.stopSpeaking();
+    }
     setMetrics((prev) => ({ ...prev, soundEnabled: nextSound }));
   };
 
@@ -208,17 +262,22 @@ export const App: React.FC = () => {
   };
 
   const handleCoreClick = () => {
-    if (metrics.aiStatus === 'IDLE') {
-      setMetrics((prev) => ({ ...prev, aiStatus: 'LISTENING' }));
-      setTimeout(() => {
-        handleSendMessage('Run diagnostics scan');
-      }, 1400);
-    }
+    voiceService.toggleListening();
+  };
+
+  const handleStopSpeaking = () => {
+    voiceService.stopSpeaking();
+  };
+
+  const handleSpeakMessage = (text: string) => {
+    voiceService.speak(text);
   };
 
   const handleStateSelect = (newState: CognitiveCoreState) => {
     setMetrics((prev) => ({ ...prev, aiStatus: newState }));
   };
+
+  const currentTranscript = voiceStatus.interimTranscript || voiceStatus.transcript;
 
   return (
     <div
@@ -249,10 +308,12 @@ export const App: React.FC = () => {
         {/* Minimal Top Control Bar */}
         <TopBar
           metrics={metrics}
+          voiceStatus={voiceStatus}
           onToggleMic={handleToggleMic}
           onToggleSound={handleToggleSound}
           onToggleHighContrast={handleToggleHighContrast}
           onToggleRightSidebar={() => setShowRightSidebar(!showRightSidebar)}
+          onStopSpeaking={handleStopSpeaking}
         />
 
         {/* Dashboard vs Sub-Panel Views */}
@@ -261,7 +322,10 @@ export const App: React.FC = () => {
             {showHomeScreen ? (
               <HomeScreen
                 aiStatus={metrics.aiStatus}
-                micActive={metrics.micActive}
+                micActive={voiceStatus.isListening}
+                transcript={currentTranscript}
+                isSpeaking={voiceStatus.isSpeaking}
+                isListening={voiceStatus.isListening}
                 onCoreClick={handleCoreClick}
                 onStateSelect={handleStateSelect}
                 onQuickAction={(cmd) => {
@@ -295,8 +359,12 @@ export const App: React.FC = () => {
                   messages={messages}
                   onSendMessage={handleSendMessage}
                   onMicClick={handleToggleMic}
-                  isListening={metrics.micActive && metrics.aiStatus === 'LISTENING'}
+                  isListening={voiceStatus.isListening}
                   isThinking={metrics.aiStatus === 'THINKING' || metrics.aiStatus === 'SEARCHING'}
+                  transcript={currentTranscript}
+                  onSpeakMessage={handleSpeakMessage}
+                  onStopSpeaking={handleStopSpeaking}
+                  isSpeaking={voiceStatus.isSpeaking}
                 />
               </div>
             )}
