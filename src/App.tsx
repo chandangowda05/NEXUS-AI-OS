@@ -5,7 +5,7 @@ import { ChatContainer } from './components/ChatContainer';
 import { SidePanel } from './components/SidePanel';
 import { RightSidebar } from './components/RightSidebar';
 import { HomeScreen } from './components/HomeScreen';
-import { StartupScreen } from './components/StartupScreen';
+import { SplashScreen } from './components/SplashScreen';
 
 import { MemoryPanel } from './components/modules/MemoryPanel';
 import { TasksPanel } from './components/modules/TasksPanel';
@@ -18,6 +18,8 @@ import { DeveloperConsole } from './components/modules/DeveloperConsole';
 
 import { SystemMetrics, ChatMessage, NavigationTab, CognitiveCoreState } from './types/assistant';
 import { voiceService } from './services/voiceService';
+import { StartupGuard } from './services/StartupGuard';
+import { registerStartupServices } from './bootstrap';
 import { VoiceStatus } from './types/voice';
 import { Sound } from './utils/soundEffects';
 import './styles/index.css';
@@ -65,6 +67,12 @@ export const App: React.FC = () => {
       },
     },
   ]);
+
+  // Guaranteed Startup Guard Execution
+  useEffect(() => {
+    registerStartupServices();
+    StartupGuard.initialize();
+  }, []);
 
   // Voice Service Subscriptions
   useEffect(() => {
@@ -291,8 +299,8 @@ export const App: React.FC = () => {
         metrics.highContrast ? 'high-contrast' : ''
       }`}
     >
-      {/* 3-Step Startup Intro Animation Overlay */}
-      {isStartingUp && <StartupScreen onComplete={() => setIsStartingUp(false)} />}
+      {/* Professional Startup SplashScreen Overlay */}
+      {isStartingUp && <SplashScreen onComplete={() => setIsStartingUp(false)} />}
 
       {/* COLUMN 1: Collapsed Icon-Only Left Navigation Drawer */}
       <SidePanel
@@ -327,6 +335,7 @@ export const App: React.FC = () => {
           <main className="flex-1 flex flex-col overflow-hidden relative">
             {showHomeScreen ? (
               <HomeScreen
+                isStartingUp={isStartingUp}
                 aiStatus={metrics.aiStatus}
                 micActive={voiceStatus.isListening}
                 transcript={currentTranscript}

@@ -8,6 +8,7 @@
 class SoundSynthesizer {
   private ctx: AudioContext | null = null;
   private enabled: boolean = true;
+  private startupPlayed: boolean = false;
 
   private initCtx() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -29,8 +30,16 @@ class SoundSynthesizer {
     return this.enabled;
   }
 
+  public resetStartupGuardForTest() {
+    this.startupPlayed = false;
+  }
+
   /** Sci-Fi OS Boots/Startup Chime */
   public playStartup() {
+    if (this.startupPlayed) return;
+    this.startupPlayed = true;
+    console.log('[NEXUS] Startup sound played');
+
     if (!this.enabled) return;
     this.initCtx();
     if (!this.ctx) return;

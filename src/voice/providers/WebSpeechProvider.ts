@@ -29,8 +29,12 @@ export class WebSpeechProvider implements IVoiceProvider {
   private isListeningActive = false;
   private state: VoiceState = 'idle';
   private callbacks: ProviderCallbacks | null = null;
+  private initialized = false;
 
   public async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+
     log('initialize() called');
     log('window.SpeechRecognition      =', typeof window !== 'undefined' ? window.SpeechRecognition : 'N/A (no window)');
     log('window.webkitSpeechRecognition =', typeof window !== 'undefined' ? window.webkitSpeechRecognition : 'N/A (no window)');
@@ -297,6 +301,7 @@ export class WebSpeechProvider implements IVoiceProvider {
       log('dispose() — recognition instance cleared');
     }
     this.callbacks = null;
+    this.initialized = false;
     this.setState('idle');
     log('dispose() — complete');
   }

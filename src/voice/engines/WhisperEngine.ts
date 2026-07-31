@@ -12,6 +12,8 @@ import { VoiceState } from '../../types/voice';
 import { modelManager, ModelInfo } from '../models/ModelManager';
 import { WhisperRuntime, RuntimeStatus } from './WhisperRuntime';
 
+import { StartupState } from '../../services/StartupState';
+
 export class WhisperEngine implements IElectronSpeechEngine {
   public readonly name = 'WhisperEngine';
 
@@ -20,6 +22,7 @@ export class WhisperEngine implements IElectronSpeechEngine {
   private pcmBuffer: Float32Array[] = [];
   private activeModel: ModelInfo | undefined = undefined;
   private runtime: WhisperRuntime;
+  private initialized = false;
 
   constructor(runtime?: WhisperRuntime) {
     this.runtime = runtime || new WhisperRuntime();
@@ -29,6 +32,11 @@ export class WhisperEngine implements IElectronSpeechEngine {
    * Initialize engine: loads active model metadata & initializes Whisper runtime
    */
   public async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+    console.log('[NEXUS] Loading Whisper');
+    StartupState.updateProgress(60, 'Loading Whisper STT Engine...');
+    console.log('[NEXUS] Whisper initialized');
     console.log('[NEXUS/WhisperEngine] initialize()');
     this.activeModel = modelManager.getActiveModel();
     const modelId = this.activeModel?.id || 'whisper-tiny.en';
@@ -135,6 +143,7 @@ export class WhisperEngine implements IElectronSpeechEngine {
     await this.runtime.dispose();
     this.pcmBuffer = [];
     this.callbacks = null;
+    this.initialized = false;
     this.setState('idle');
   }
 

@@ -20,6 +20,7 @@ export class ElectronVoiceProvider implements IVoiceProvider {
 
   private state: VoiceState = 'idle';
   private callbacks: ProviderCallbacks | null = null;
+  private initialized = false;
 
   constructor(engine?: IElectronSpeechEngine, audioManager?: AudioManager) {
     this.engine = engine || new WhisperEngine();
@@ -27,6 +28,8 @@ export class ElectronVoiceProvider implements IVoiceProvider {
   }
 
   public async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
     await this.engine.initialize();
   }
 
@@ -90,6 +93,7 @@ export class ElectronVoiceProvider implements IVoiceProvider {
     this.audioManager.dispose();
     this.engine.dispose();
     this.callbacks = null;
+    this.initialized = false;
     this.setState('idle');
   }
 

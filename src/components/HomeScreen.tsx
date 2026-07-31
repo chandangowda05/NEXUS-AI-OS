@@ -35,6 +35,7 @@ import { CognitiveCoreState } from '../types/assistant';
 import { Sound } from '../utils/soundEffects';
 
 interface HomeScreenProps {
+  isStartingUp?: boolean;
   aiStatus: CognitiveCoreState;
   micActive: boolean;
   transcript?: string;
@@ -98,6 +99,7 @@ const SUGGESTION_PILLS = [
 ];
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
+  isStartingUp,
   aiStatus,
   micActive: _micActive,
   transcript,
@@ -156,35 +158,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <div className="w-full max-w-4xl flex flex-col items-center space-y-7 my-auto">
 
         {/* ── SECTION 1: GREETING HEADER ── */}
-        <div className="text-center space-y-2">
-          <div className="flex justify-center mb-1">
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{ background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)' }}
+        {!isStartingUp && (
+          <div className="text-center space-y-2">
+            <div className="flex justify-center mb-1">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)' }}
+              >
+                {greetingIcon === 'morning' && <Sun className="w-5.5 h-5.5 text-amber-400" />}
+                {greetingIcon === 'afternoon' && <CloudSun className="w-5.5 h-5.5 text-amber-300" />}
+                {greetingIcon === 'evening' && <Moon className="w-5.5 h-5.5 text-cyan-400" />}
+              </div>
+            </div>
+
+            <h1
+              className="font-display font-black text-4xl md:text-5xl text-slate-100 tracking-tight"
+              style={{ textShadow: '0 0 40px rgba(0, 240, 255, 0.25)' }}
             >
-              {greetingIcon === 'morning' && <Sun className="w-5.5 h-5.5 text-amber-400" />}
-              {greetingIcon === 'afternoon' && <CloudSun className="w-5.5 h-5.5 text-amber-300" />}
-              {greetingIcon === 'evening' && <Moon className="w-5.5 h-5.5 text-cyan-400" />}
+              {greeting}, Chandu.
+            </h1>
+            <p className="text-slate-400 text-base md:text-lg font-light tracking-wide">
+              I&apos;m ready whenever you are.
+            </p>
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-950/70 border border-slate-900 text-xs font-mono text-slate-400">
+              <Clock className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-cyan-300 font-bold">{timeStr}</span>
+              <span>·</span>
+              <span>{dateStr}</span>
             </div>
           </div>
-
-          <h1
-            className="font-display font-black text-4xl md:text-5xl text-slate-100 tracking-tight"
-            style={{ textShadow: '0 0 40px rgba(0, 240, 255, 0.25)' }}
-          >
-            {greeting}, Chandu.
-          </h1>
-          <p className="text-slate-400 text-base md:text-lg font-light tracking-wide">
-            I&apos;m ready whenever you are.
-          </p>
-
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-950/70 border border-slate-900 text-xs font-mono text-slate-400">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-cyan-300 font-bold">{timeStr}</span>
-            <span>·</span>
-            <span>{dateStr}</span>
-          </div>
-        </div>
+        )}
 
         {/* ── SECTION 2: 400PX COGNITIVE CORE CENTERPIECE ── */}
         <div className="flex flex-col items-center justify-center py-1 shrink-0 space-y-2">

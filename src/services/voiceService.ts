@@ -28,11 +28,16 @@ const err = (...args: any[]) => console.error(TAG, ...args);
 
 import { ProviderFactory } from '../voice/providers/ProviderFactory';
 
-export class VoiceService {
+import { IStartupService } from './StartupGuard';
+
+export class VoiceService implements IStartupService {
+  public readonly name = 'Voice';
+  public readonly taskLabel = 'Loading Voice Engine...';
   private static instance: VoiceService;
 
   private provider: IVoiceProvider;
   private speechQueue: SpeechQueue;
+  private initialized = false;
 
   private state: VoiceState = 'idle';
   private transcript = '';
@@ -70,6 +75,15 @@ export class VoiceService {
       log('getInstance() — returning existing singleton instance');
     }
     return VoiceService.instance;
+  }
+
+  public async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+    console.log('[NEXUS] Voice initialized');
+    if (this.provider) {
+      await this.provider.initialize();
+    }
   }
 
   /**
@@ -331,6 +345,7 @@ export class VoiceService {
     }
     this.statusListeners.clear();
     this.transcriptListeners.clear();
+    this.initialized = false;
     this.state = 'idle';
     this.transcript = '';
     this.interimTranscript = '';
