@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import path from 'path';
 import { getSystemMetrics } from './services/systemInfo';
 import { executeDesktopCommand } from './services/desktopControl';
 import { initDatabase, getDb } from './services/db';
 import { agentManager } from './agents/AgentManager';
+import { voiceMainService } from './services/VoiceMainService';
 
 let mainWindow: BrowserWindow | null = null;
 let metricsInterval: NodeJS.Timeout | null = null;
@@ -25,6 +26,8 @@ function createWindow() {
     },
   });
 
+  voiceMainService.setTargetWindow(mainWindow);
+
   // Load Vite Dev Server URL or Production dist
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   if (isDev) {
@@ -35,6 +38,7 @@ function createWindow() {
   }
 
   mainWindow.on('closed', () => {
+    voiceMainService.dispose();
     mainWindow = null;
     if (metricsInterval) clearInterval(metricsInterval);
   });
@@ -49,6 +53,26 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Check 5: Diagnostic logs for Electron Main process
+  console.log('[Electron Main Diagnostics] Electron Version:', process.versions.electron);
+  console.log('[Electron Main Diagnostics] Chromium Version:', process.versions.chrome);
+
+  // Check 2 & 5: Temporary Permission Request Handler with diagnostic logging
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback, details) => {
+    console.log(`[Electron Main Diagnostics] Permission requested: "${permission}"`, details);
+    if (permission === 'media' || (permission as string) === 'microphone') {
+      console.log(`[Electron Main Diagnostics] Granting permission: "${permission}"`);
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin) => {
+    console.log(`[Electron Main Diagnostics] Permission check: "${permission}" from ${requestingOrigin}`);
+    return permission === 'media' || (permission as string) === 'microphone';
+  });
+
   initDatabase();
   createWindow();
 
@@ -58,6 +82,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  voiceMainService.dispose();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -103,4 +128,24 @@ ipcMain.handle('save-preference', async (_event, key: string, value: string) => 
     console.error('Error saving preference:', err);
     return false;
   }
+});
+
+// Voice Pipeline IPC Wiring
+ipcMain.handle('voice:start', async (_event, lang?: string) => {
+  console.log('[Electron Main IPC] voice:start requested', { lang });
+  return await voiceMainService.startSession(lang);
+});
+
+ipcMain.handle('voice:stop', async () => {
+  console.log('[Electron Main IPC] voice:stop requested');
+  await voiceMainService.stopSession();
+  return true;
+});
+
+ipcMain.on('voice:audio-chunk', (_event, buffer: ArrayBuffer) => {
+  voiceMainService.handleAudioChunk(buffer);
+});
+ipcMain.on('voice:audio-chunk', (_event, buffer: ArrayBuffer) => {
+  console.log('[Electron Main IPC] Received audio chunk:', buffer.byteLength);
+  voiceMainService.handleAudioChunk(buffer);
 });

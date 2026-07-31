@@ -268,7 +268,7 @@ export const CognitiveCore: React.FC<CognitiveCoreProps> = ({
         role="button"
         aria-label={`NEXUS Cognitive Core — ${state}. Click to activate.`}
         tabIndex={0}
-        onClick={() => { Sound.playListen(); onCoreClick?.(); }}
+        onClick={() => { console.log('🔥 [NEXUS/UI] Microphone button clicked (CognitiveCore canvas element)'); Sound.playListen(); onCoreClick?.(); }}
         onKeyDown={(e) => e.key === 'Enter' && onCoreClick?.()}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}

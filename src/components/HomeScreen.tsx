@@ -222,7 +222,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             />
             <button
               type="button"
-              onClick={() => { Sound.playListen(); onCoreClick(); }}
+              onClick={() => { console.log('🔥 [NEXUS/UI] Microphone button clicked (HomeScreen prompt bar mic button)'); Sound.playListen(); onCoreClick(); }}
               title="Voice Input"
               className="p-2 rounded-xl text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
             >

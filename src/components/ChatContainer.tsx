@@ -428,6 +428,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
         <button
           type="button"
           onClick={() => {
+            console.log('🔥 [NEXUS/UI] Microphone button clicked (ChatContainer mic button)');
             Sound.playListen();
             onMicClick();
           }}

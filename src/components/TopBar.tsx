@@ -243,6 +243,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Microphone Toggle */}
         <button
           onClick={() => {
+            console.log('🔥 [NEXUS/UI] Microphone button clicked (TopBar button element)');
             Sound.playListen();
             onToggleMic();
           }}

@@ -244,7 +244,10 @@ export const App: React.FC = () => {
   };
 
   const handleToggleMic = () => {
+    console.log('🔥 [NEXUS/UI] Microphone button clicked (TopBar / ChatContainer)');
+    console.log('🔥 [NEXUS/UI] Calling VoiceService.toggleListening()');
     voiceService.toggleListening();
+    console.log('🔥 [NEXUS/UI] VoiceService.toggleListening() returned');
   };
 
   const handleToggleSound = () => {
@@ -262,7 +265,10 @@ export const App: React.FC = () => {
   };
 
   const handleCoreClick = () => {
+    console.log('🔥 [NEXUS/UI] Microphone button clicked (CognitiveCore / HomeScreen prompt mic)');
+    console.log('🔥 [NEXUS/UI] Calling VoiceService.toggleListening()');
     voiceService.toggleListening();
+    console.log('🔥 [NEXUS/UI] VoiceService.toggleListening() returned');
   };
 
   const handleStopSpeaking = () => {

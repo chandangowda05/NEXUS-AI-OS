@@ -6,6 +6,13 @@
 
 import { VoiceOptions } from '../types/voice';
 
+// ─── Debug logger ───────────────────────────────────────────────────────────
+const TAG = '[NEXUS/SpeechQueue]';
+const log = (...args: any[]) => console.log(TAG, ...args);
+const warn = (...args: any[]) => console.warn(TAG, ...args);
+const err = (...args: any[]) => console.error(TAG, ...args);
+// ────────────────────────────────────────────────────────────────────────────
+
 export type SpeechQueueListener = (isSpeaking: boolean, queueCount: number) => void;
 
 interface QueueItem {
@@ -34,6 +41,7 @@ export class SpeechQueue {
    * Add text to speech queue
    */
   public enqueue(text: string, options?: VoiceOptions): string {
+    log('enqueue() called — raw text length:', text.length);
     const cleanText = text
       .replace(/\*\*.*?\*\*/g, (m) => m.slice(2, -2))
       .replace(/`.*?`/g, (m) => m.slice(1, -1))
@@ -41,14 +49,20 @@ export class SpeechQueue {
       .replace(/[#*_~]/g, '')
       .trim();
 
-    if (!cleanText) return '';
+    if (!cleanText) {
+      warn('enqueue() — text is empty after cleaning; skipping');
+      return '';
+    }
 
     const id = `tts-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     this.queue.push({ id, text: cleanText, options });
+    log('enqueue() — queued item', id, '| queue length now:', this.queue.length);
 
     if (!this.isSpeakingActive) {
+      log('enqueue() — not currently speaking; starting processQueue()');
       this.processQueue();
     } else {
+      log('enqueue() — already speaking; item added to queue, notifying');
       this.notify();
     }
 
@@ -60,17 +74,22 @@ export class SpeechQueue {
    * Resets speaking state and notifies subscribers instantly.
    */
   public cancel(): void {
+    log('cancel() called — flushing queue (length:', this.queue.length, ') and stopping active speech');
     this.queue = [];
     if (this.isSupported()) {
       try {
         window.speechSynthesis.cancel();
-      } catch (_e) {
-        // Ignore cancel errors
+        log('cancel() — window.speechSynthesis.cancel() called');
+      } catch (cancelErr: any) {
+        warn('cancel() — speechSynthesis.cancel() threw:', cancelErr?.message);
       }
+    } else {
+      warn('cancel() — speechSynthesis not supported; nothing to cancel');
     }
     this.currentUtterance = null;
     this.isSpeakingActive = false;
     this.notify();
+    log('cancel() — done; state reset to idle');
   }
 
   /**
@@ -102,7 +121,10 @@ export class SpeechQueue {
    * Process next utterance in queue
    */
   private processQueue(): void {
+    log('processQueue() — queue length:', this.queue.length, '| isSpeakingActive:', this.isSpeakingActive);
+
     if (this.queue.length === 0) {
+      log('processQueue() — queue empty; setting idle');
       this.isSpeakingActive = false;
       this.currentUtterance = null;
       this.notify();
@@ -110,6 +132,7 @@ export class SpeechQueue {
     }
 
     if (!this.isSupported()) {
+      warn('processQueue() — speechSynthesis not supported; clearing queue');
       this.queue = [];
       this.isSpeakingActive = false;
       this.notify();
@@ -147,18 +170,22 @@ export class SpeechQueue {
       }
 
       utterance.onend = () => {
+        log('utterance.onend — finished speaking item, processing next in queue');
         this.currentUtterance = null;
         this.processQueue();
       };
 
-      utterance.onerror = (_e) => {
+      utterance.onerror = (utterErr: any) => {
+        err('utterance.onerror — TTS error:', utterErr?.error, utterErr?.message);
         this.currentUtterance = null;
         this.processQueue();
       };
 
       this.currentUtterance = utterance;
       window.speechSynthesis.speak(utterance);
-    } catch (_err) {
+    } catch (speakErr: any) {
+      err('processQueue() — speechSynthesis.speak() threw:', speakErr?.message);
+      err('Stack:', speakErr?.stack);
       this.currentUtterance = null;
       this.processQueue();
     }
@@ -168,8 +195,10 @@ export class SpeechQueue {
    * Full cleanup of SpeechQueue
    */
   public dispose(): void {
+    log('dispose() called — cancelling and clearing listeners');
     this.cancel();
     this.listeners.clear();
+    log('dispose() — complete');
   }
 
   private notify(): void {

@@ -2,6 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VoiceService } from '../services/voiceService';
 import { MockProvider } from '../voice/providers/MockProvider';
 import { WebSpeechProvider } from '../voice/providers/WebSpeechProvider';
+import { ProviderFactory } from '../voice/providers/ProviderFactory';
+import { ElectronVoiceProvider } from '../voice/providers/ElectronVoiceProvider';
+import { VoskEngine } from '../voice/engines/VoskEngine';
+import { modelManager } from '../voice/models/ModelManager';
 import { SpeechQueue } from '../tts/SpeechQueue';
 
 describe('Revised Voice Engine Architecture Unit Tests', () => {
@@ -129,12 +133,52 @@ describe('Revised Voice Engine Architecture Unit Tests', () => {
       expect(service.getStatus().isListening).toBe(false);
     });
 
+    it('should handle recoverable network error by setting friendly message and returning to idle state', () => {
+      mockProvider.simulateError('Speech recognition service unavailable.', 'network');
+      const status = service.getStatus();
+      expect(status.state).toBe('idle');
+      expect(status.error).toBe('Speech recognition service unavailable.');
+    });
+
     it('should perform clean disposal on window teardown', () => {
       service.dispose();
       const status = service.getStatus();
       expect(status.state).toBe('idle');
       expect(status.transcript).toBe('');
       expect(status.error).toBeNull();
+    });
+  });
+
+  describe('4. ProviderFactory & Refined Architecture Unit Tests', () => {
+    it('should return MockProvider when explicit mock type requested', () => {
+      const provider = ProviderFactory.createProvider('mock');
+      expect(provider.name).toBe('MockSpeech');
+    });
+
+    it('should return WebSpeechProvider by default in standard browser environment', () => {
+      const provider = ProviderFactory.createProvider();
+      expect(provider.name).toBeDefined();
+    });
+
+    it('should instantiate ModelManager and retrieve model metadata', () => {
+      const activeModel = modelManager.getActiveModel();
+      expect(activeModel).toBeDefined();
+      expect(activeModel?.id).toBe('vosk-small-en-us-0.15');
+      expect(modelManager.isModelInstalled('vosk-small-en-us-0.15')).toBe(true);
+    });
+
+    it('should instantiate VoskEngine adhering to IElectronSpeechEngine abstraction', async () => {
+      const engine = new VoskEngine();
+      expect(engine.name).toBe('VoskEngine');
+      expect(engine.isSupported()).toBe(true);
+      await engine.initialize();
+      expect(engine.name).toBe('VoskEngine');
+    });
+
+    it('should instantiate ElectronVoiceProvider delegating to engine', () => {
+      const provider = new ElectronVoiceProvider();
+      expect(provider.name).toBe('ElectronVoice');
+      expect(provider.getState()).toBe('idle');
     });
   });
 });

@@ -18,7 +18,8 @@
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "systeminformation": "^5.25.11"
+    "systeminformation": "^5.25.11",
+    "vosk-browser": "^0.0.8"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.0",

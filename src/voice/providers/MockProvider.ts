@@ -41,10 +41,14 @@ export class MockProvider implements IVoiceProvider {
     }
   }
 
-  public simulateError(message: string): void {
-    this.setState('error');
+  public simulateError(message: string, code?: string): void {
+    if (code === 'network' || code === 'no-speech' || code === 'aborted') {
+      this.setState('idle');
+    } else {
+      this.setState('error');
+    }
     if (this.callbacks) {
-      this.callbacks.onError(message);
+      this.callbacks.onError(message, code);
     }
   }
 
