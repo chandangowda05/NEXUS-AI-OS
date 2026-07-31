@@ -5,8 +5,13 @@ import { modelManager } from '../voice/models/ModelManager';
 
 describe('WhisperRuntime Unit Tests', () => {
   let runtime: WhisperRuntime;
+  let mockPipelineLoader: any;
 
   beforeEach(() => {
+    mockPipelineLoader = vi.fn().mockResolvedValue({
+      dispose: vi.fn().mockResolvedValue(undefined),
+    });
+    WhisperRuntime.setDefaultPipelineLoader(mockPipelineLoader);
     runtime = new WhisperRuntime();
   });
 

@@ -1,11 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WhisperEngine } from '../voice/engines/WhisperEngine';
+import { WhisperRuntime } from '../voice/engines/WhisperRuntime';
 import { modelManager } from '../voice/models/ModelManager';
 
 describe('WhisperEngine Unit Tests', () => {
   let engine: WhisperEngine;
+  let mockPipelineLoader: any;
 
   beforeEach(() => {
+    mockPipelineLoader = vi.fn().mockResolvedValue({
+      dispose: vi.fn().mockResolvedValue(undefined),
+    });
+    WhisperRuntime.setDefaultPipelineLoader(mockPipelineLoader);
     engine = new WhisperEngine();
   });
 
