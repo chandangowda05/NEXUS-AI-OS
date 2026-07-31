@@ -106,6 +106,20 @@ export class ModelManager {
     return info?.cacheDir || `${this.modelCacheDir}/${modelId}`;
   }
 
+  public validateModel(modelId: string): { valid: boolean; error?: string; model?: ModelInfo } {
+    const info = this.availableModels.get(modelId);
+    if (!info) {
+      return { valid: false, error: `Model "${modelId}" not found in manifest.` };
+    }
+    if (!info.downloadStatus && !info.isDownloaded) {
+      return { valid: false, error: `Model "${modelId}" is not downloaded or available.` };
+    }
+    if (!info.cacheDir || !info.version || !info.id || !info.name) {
+      return { valid: false, error: `Model "${modelId}" has invalid or missing metadata.` };
+    }
+    return { valid: true, model: info };
+  }
+
   public async setActiveModel(modelId: string): Promise<boolean> {
     const info = this.availableModels.get(modelId);
     if (!info) return false;
