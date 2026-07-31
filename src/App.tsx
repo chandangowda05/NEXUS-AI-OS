@@ -19,7 +19,7 @@ import { DeveloperConsole } from './components/modules/DeveloperConsole';
 import { SystemMetrics, ChatMessage, NavigationTab, CognitiveCoreState } from './types/assistant';
 import { voiceService } from './services/voiceService';
 import { StartupGuard } from './services/StartupGuard';
-import { registerStartupServices } from './bootstrap';
+import { registerStartupServices, startBackgroundServices } from './bootstrap';
 import { VoiceStatus } from './types/voice';
 import { Sound } from './utils/soundEffects';
 import './styles/index.css';
@@ -300,7 +300,14 @@ export const App: React.FC = () => {
       }`}
     >
       {/* Professional Startup SplashScreen Overlay */}
-      {isStartingUp && <SplashScreen onComplete={() => setIsStartingUp(false)} />}
+      {isStartingUp && (
+        <SplashScreen
+          onComplete={() => {
+            setIsStartingUp(false);
+            startBackgroundServices();
+          }}
+        />
+      )}
 
       {/* COLUMN 1: Collapsed Icon-Only Left Navigation Drawer */}
       <SidePanel

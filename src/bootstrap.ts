@@ -1,26 +1,44 @@
 /**
  * NEXUS AI OS — Application Bootstrap Module
  *
- * Registers all core startup services with StartupGuard outside React component lifecycle.
- * Future core services (Database, Memory, AI, Metrics, Plugins) can be registered here.
+ * Separates critical startup services (StartupGuard) from non-critical background services (BackgroundTaskManager).
+ * Critical services initialize before UI appears; background services initialize after SplashScreen finishes.
  */
 
 import { StartupGuard } from './services/StartupGuard';
 import { voiceService } from './services/voiceService';
+import { BackgroundTaskManager } from './services/BackgroundTaskManager';
 
 /**
- * Register all core startup services with StartupGuard exactly once.
+ * Register all critical core startup services with StartupGuard exactly once.
  */
 export function registerStartupServices(): void {
   StartupGuard.register(voiceService);
 }
 
 /**
- * Perform full application bootstrap lifecycle sequence.
+ * Register all non-critical background services with BackgroundTaskManager.
+ * Future services (Database, Memory, AI, Metrics, Plugins) will be registered here.
+ */
+export function registerBackgroundServices(): void {
+  // Existing non-critical background tasks will be registered here.
+  // Supports zero tasks natively without errors or warnings.
+}
+
+/**
+ * Perform critical application startup bootstrap sequence.
  */
 export async function bootstrapApp(): Promise<void> {
   registerStartupServices();
   await StartupGuard.initialize();
+}
+
+/**
+ * Trigger lazy background service initialization after SplashScreen completes.
+ */
+export async function startBackgroundServices(): Promise<void> {
+  registerBackgroundServices();
+  await BackgroundTaskManager.start();
 }
 
 export default bootstrapApp;
