@@ -163,8 +163,8 @@ describe('Revised Voice Engine Architecture Unit Tests', () => {
     it('should instantiate ModelManager and retrieve model metadata', () => {
       const activeModel = modelManager.getActiveModel();
       expect(activeModel).toBeDefined();
-      expect(activeModel?.id).toBe('vosk-small-en-us-0.15');
-      expect(modelManager.isModelInstalled('vosk-small-en-us-0.15')).toBe(true);
+      expect(activeModel?.id).toBe('whisper-tiny.en');
+      expect(modelManager.isModelInstalled('whisper-tiny.en')).toBe(true);
     });
 
     it('should instantiate VoskEngine adhering to IElectronSpeechEngine abstraction', async () => {

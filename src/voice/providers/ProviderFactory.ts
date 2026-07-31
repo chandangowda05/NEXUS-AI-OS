@@ -9,6 +9,7 @@ import { IVoiceProvider } from './IVoiceProvider';
 import { WebSpeechProvider } from './WebSpeechProvider';
 import { ElectronVoiceProvider } from './ElectronVoiceProvider';
 import { MockProvider } from './MockProvider';
+import { WhisperEngine } from '../engines/WhisperEngine';
 import { VoiceProviderType } from '../../types/voice';
 
 export class ProviderFactory {
@@ -25,7 +26,7 @@ export class ProviderFactory {
 
     // Auto-detect environment: Electron Desktop vs Standard Web Browser
     if (typeof window !== 'undefined' && (window as any).electronAPI) {
-      return new ElectronVoiceProvider();
+      return new ElectronVoiceProvider(new WhisperEngine());
     }
 
     // Standard Browser default

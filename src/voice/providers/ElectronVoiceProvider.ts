@@ -9,7 +9,7 @@
 import { IVoiceProvider } from './IVoiceProvider';
 import { ProviderCallbacks, VoiceState } from '../../types/voice';
 import { IElectronSpeechEngine } from '../engines/IElectronSpeechEngine';
-import { VoskEngine } from '../engines/VoskEngine';
+import { WhisperEngine } from '../engines/WhisperEngine';
 import { AudioManager } from '../audio/AudioManager';
 
 export class ElectronVoiceProvider implements IVoiceProvider {
@@ -22,7 +22,7 @@ export class ElectronVoiceProvider implements IVoiceProvider {
   private callbacks: ProviderCallbacks | null = null;
 
   constructor(engine?: IElectronSpeechEngine, audioManager?: AudioManager) {
-    this.engine = engine || new VoskEngine();
+    this.engine = engine || new WhisperEngine();
     this.audioManager = audioManager || new AudioManager();
   }
 
