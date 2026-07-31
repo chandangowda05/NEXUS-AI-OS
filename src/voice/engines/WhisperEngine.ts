@@ -2,7 +2,8 @@
  * NEXUS AI OS — WhisperEngine Implementation
  *
  * Implements IElectronSpeechEngine using offline Whisper STT runtime architecture.
- * Manages model metadata loading, stream lifecycle, PCM buffering, runtime initialization, and cleanup.
+ * Manages model metadata loading, stream lifecycle, PCM buffering & concatenation,
+ * runtime inference, state machine (idle -> listening -> processing -> idle), and error handling.
  * Preserves standard speech engine contract for Electron Desktop environment.
  */
 
@@ -45,7 +46,7 @@ export class WhisperEngine implements IElectronSpeechEngine {
   }
 
   /**
-   * Start streaming session, resetting PCM buffer and entering listening state
+   * Start streaming session, clearing previous PCM buffer and entering listening state
    */
   public async startStream(lang?: string): Promise<void> {
     console.log(`[NEXUS/WhisperEngine] startStream() | lang: ${lang || 'default'}`);
@@ -58,17 +59,54 @@ export class WhisperEngine implements IElectronSpeechEngine {
    */
   public writePCM(chunk: Float32Array): void {
     if (this.state !== 'listening') return;
+    if (!chunk || !(chunk instanceof Float32Array) || chunk.length === 0) {
+      console.warn('[NEXUS/WhisperEngine] Received invalid or empty Float32Array PCM chunk.');
+      return;
+    }
     this.pcmBuffer.push(chunk);
     console.log(`[NEXUS/WhisperEngine] writePCM() | buffered chunk of ${chunk.length} samples (total chunks: ${this.pcmBuffer.length})`);
   }
 
   /**
-   * Stop active streaming session and return to idle state
+   * Stop active streaming session, process accumulated PCM audio, invoke Whisper inference, and emit final transcript
    */
   public async stopStream(): Promise<void> {
-    console.log('[NEXUS/WhisperEngine] stopStream()');
-    if (this.state === 'listening') {
+    console.log('[NEXUS/WhisperEngine] Recording stopped');
+    if (this.state !== 'listening') {
+      return;
+    }
+
+    this.setState('processing');
+    console.log('[NEXUS/WhisperEngine] Processing audio');
+
+    try {
+      const concatenatedPCM = this.getConcatenatedPCM();
+
+      // Validation: empty audio buffer or 0 samples
+      if (!concatenatedPCM || concatenatedPCM.length === 0) {
+        throw new Error('Empty audio buffer: no PCM audio data was recorded.');
+      }
+
+      if (!this.runtime.isReady()) {
+        throw new Error('Whisper runtime is not initialized or ready for inference.');
+      }
+
+      const result = await this.runtime.transcribe(concatenatedPCM);
+
+      if (this.callbacks) {
+        this.callbacks.onTranscript(result.text, true);
+        console.log('[NEXUS/WhisperEngine] Transcript emitted');
+      }
+
       this.setState('idle');
+    } catch (err: any) {
+      console.error(`[NEXUS/WhisperEngine] Transcription processing failed: ${err.message}`);
+      this.setState('error');
+      if (this.callbacks) {
+        this.callbacks.onError(`Transcription failed: ${err.message}`, 'transcription_failed');
+      }
+    } finally {
+      this.pcmBuffer = [];
     }
   }
 
@@ -91,7 +129,9 @@ export class WhisperEngine implements IElectronSpeechEngine {
    */
   public async dispose(): Promise<void> {
     console.log('[NEXUS/WhisperEngine] dispose()');
-    await this.stopStream();
+    if (this.state === 'listening') {
+      await this.stopStream();
+    }
     await this.runtime.dispose();
     this.pcmBuffer = [];
     this.callbacks = null;
@@ -113,10 +153,24 @@ export class WhisperEngine implements IElectronSpeechEngine {
   }
 
   /**
-   * Getter for buffered PCM chunks (internal/testing utility)
+   * Getter for buffered PCM chunks
    */
   public getBufferedChunks(): Float32Array[] {
     return this.pcmBuffer;
+  }
+
+  /**
+   * Helper concatenating all Float32Array chunks in pcmBuffer into a single Float32Array
+   */
+  public getConcatenatedPCM(): Float32Array {
+    const totalLength = this.pcmBuffer.reduce((acc, chunk) => acc + chunk.length, 0);
+    const result = new Float32Array(totalLength);
+    let offset = 0;
+    for (const chunk of this.pcmBuffer) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
   }
 
   /**

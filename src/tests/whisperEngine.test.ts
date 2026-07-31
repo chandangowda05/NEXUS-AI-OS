@@ -8,9 +8,9 @@ describe('WhisperEngine Unit Tests', () => {
   let mockPipelineLoader: any;
 
   beforeEach(() => {
-    mockPipelineLoader = vi.fn().mockResolvedValue({
-      dispose: vi.fn().mockResolvedValue(undefined),
-    });
+    const mockPipeline: any = vi.fn().mockResolvedValue({ text: 'mock transcript' });
+    mockPipeline.dispose = vi.fn().mockResolvedValue(undefined);
+    mockPipelineLoader = vi.fn().mockResolvedValue(mockPipeline);
     WhisperRuntime.setDefaultPipelineLoader(mockPipelineLoader);
     engine = new WhisperEngine();
   });
@@ -38,6 +38,8 @@ describe('WhisperEngine Unit Tests', () => {
 
     await engine.startStream('en-US');
     expect(currentState).toBe('listening');
+
+    engine.writePCM(new Float32Array([0.1, 0.2, 0.3]));
 
     await engine.stopStream();
     expect(currentState).toBe('idle');
@@ -78,6 +80,7 @@ describe('WhisperEngine Unit Tests', () => {
       },
     });
 
+    await engine.initialize();
     await engine.startStream();
     engine.writePCM(new Float32Array([0.1, 0.2]));
     await engine.dispose();

@@ -2,7 +2,7 @@
  * NEXUS AI OS — WhisperRuntime Implementation (@huggingface/transformers backend)
  *
  * Manages Hugging Face Transformers Whisper pipeline initialization, model caching,
- * inference abstraction, and resource cleanup.
+ * inference execution, and resource cleanup.
  */
 
 import { pipeline, env } from '@huggingface/transformers';
@@ -23,6 +23,12 @@ export type PipelineLoader = (
   model?: string,
   options?: any
 ) => Promise<any>;
+
+export interface TranscriptionResult {
+  text: string;
+  confidence?: number;
+  language?: string;
+}
 
 export class WhisperRuntime {
   private static defaultPipelineLoader: PipelineLoader | null = null;
@@ -135,15 +141,32 @@ export class WhisperRuntime {
   }
 
   /**
-   * Transcribe PCM audio data using the loaded pipeline
+   * Transcribe Float32 16kHz mono PCM audio data using the loaded pipeline
    */
-  public async transcribe(audio: Float32Array | number[]): Promise<{ text: string }> {
+  public async transcribe(audio: Float32Array | number[]): Promise<TranscriptionResult> {
     if (this.status !== 'ready' || !this.session?.pipelineInstance) {
       throw new Error('WhisperRuntime is not ready for transcription.');
     }
+
+    console.log('[NEXUS/WhisperRuntime] Running inference');
     const result = await this.session.pipelineInstance(audio);
+
+    let text = '';
+    if (typeof result === 'string') {
+      text = result;
+    } else if (Array.isArray(result) && result.length > 0) {
+      text = result[0]?.text || '';
+    } else if (result && typeof result === 'object') {
+      text = result.text || '';
+    }
+
+    text = text.trim();
+    console.log(`[NEXUS/WhisperRuntime] Transcript:\n"${text}"`);
+
     return {
-      text: typeof result === 'string' ? result : (result?.text || ''),
+      text,
+      confidence: 1.0,
+      language: 'en',
     };
   }
 

@@ -53,7 +53,9 @@ describe('Whisper Backend (@huggingface/transformers) Unit Tests', () => {
     const result = await runtime.transcribe(dummyAudio);
 
     expect(mockPipeline).toHaveBeenCalledWith(dummyAudio);
-    expect(result).toEqual({ text: 'hello world from whisper' });
+    expect(result.text).toBe('hello world from whisper');
+    expect(result.confidence).toBe(1.0);
+    expect(result.language).toBe('en');
   });
 
   it('should handle dispose and clean up pipeline resources', async () => {
