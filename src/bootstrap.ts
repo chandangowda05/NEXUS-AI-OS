@@ -8,6 +8,7 @@
 import { StartupGuard } from './services/StartupGuard';
 import { voiceService } from './services/voiceService';
 import { BackgroundTaskManager } from './services/BackgroundTaskManager';
+import { checkConnection } from './services/supabaseService';
 
 /**
  * Register all critical core startup services with StartupGuard exactly once.
@@ -39,6 +40,16 @@ export async function bootstrapApp(): Promise<void> {
 export async function startBackgroundServices(): Promise<void> {
   registerBackgroundServices();
   await BackgroundTaskManager.start();
+
+  // Verify Supabase backend connectivity (non-blocking)
+  checkConnection().then((connected) => {
+    if (connected) {
+      console.log('[NEXUS/Bootstrap] Supabase backend connected — cloud persistence active.');
+    } else {
+      console.warn('[NEXUS/Bootstrap] Supabase not connected — running in offline/local mode.');
+    }
+  });
 }
 
 export default bootstrapApp;
+

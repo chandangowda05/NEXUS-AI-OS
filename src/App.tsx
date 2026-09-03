@@ -22,6 +22,7 @@ import { StartupGuard } from './services/StartupGuard';
 import { registerStartupServices, startBackgroundServices } from './bootstrap';
 import { VoiceStatus } from './types/voice';
 import { Sound } from './utils/soundEffects';
+import { useSupabaseMessages } from './hooks/useSupabaseMessages';
 import './styles/index.css';
 
 export const App: React.FC = () => {
@@ -52,21 +53,7 @@ export const App: React.FC = () => {
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(true);
   const [showHomeScreen, setShowHomeScreen] = useState(true);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-1',
-      sender: 'assistant',
-      content:
-        '**NEXUS Cognitive Engine Initialized.** Greetings, Sir. All 9 specialized AI agents, system observers, and memory cores are online and operational.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      actionCard: {
-        title: 'Project Phoenix Control Center',
-        description: 'Multi-Agent orchestrator & telemetry active.',
-        type: 'SUCCESS',
-        details: 'ONLINE',
-      },
-    },
-  ]);
+  const { messages, addMessage } = useSupabaseMessages();
 
   // Guaranteed Startup Guard Execution
   useEffect(() => {
@@ -154,7 +141,7 @@ export const App: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    addMessage(userMsg);
     setMetrics((prev) => ({ ...prev, aiStatus: 'THINKING' }));
 
     if (window.electronAPI?.processUserRequest) {
@@ -168,7 +155,7 @@ export const App: React.FC = () => {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           actionCard: response.actionCards?.[0],
         };
-        setMessages((prev) => [...prev, assistantMsg]);
+        addMessage(assistantMsg);
         Sound.playTaskComplete();
         speakAssistantResponse(replyText);
       } catch (err: any) {
@@ -179,7 +166,7 @@ export const App: React.FC = () => {
           content: errorMsgText,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages((prev) => [...prev, errorMsg]);
+        addMessage(errorMsg);
         Sound.playError();
         speakAssistantResponse(errorMsgText);
       } finally {
@@ -245,7 +232,7 @@ export const App: React.FC = () => {
         toolExecutionCard: toolCard,
       };
 
-      setMessages((prev) => [...prev, assistantMsg]);
+      addMessage(assistantMsg);
       setMetrics((prev) => ({ ...prev, aiStatus: 'IDLE' }));
       speakAssistantResponse(reply);
     }, 1200);

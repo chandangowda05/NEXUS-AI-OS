@@ -1,29 +1,16 @@
 import React, { useState } from 'react';
 import { Settings, Shield, Mic, Volume2, Palette, Sparkles, Save } from 'lucide-react';
 import { UserPreferences } from '../../types/assistant';
+import { useSupabasePreferences } from '../../hooks/useSupabasePreferences';
 
 export const SettingsPanel: React.FC = () => {
-  const [prefs, setPrefs] = useState<UserPreferences>({
-    assistantName: 'NEXUS',
-    codename: 'Project Phoenix',
-    wakeWord: 'Hey Nexus',
-    voiceName: 'Holographic Deep Natural',
-    voiceSpeed: 1.0,
-    personalityMode: 'HUMOROUS',
-    securityLevel: 'WINDOWS_HELLO',
-    themeAccent: 'CYAN',
-    soundEnabled: true,
-    highContrast: false,
-  });
+  const { prefs, setPrefs, savePrefs, isLoading } = useSupabasePreferences();
 
   const [saved, setSaved] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (window.electronAPI) {
-      window.electronAPI.savePreference('assistantName', prefs.assistantName);
-      window.electronAPI.savePreference('wakeWord', prefs.wakeWord);
-    }
+    const success = await savePrefs(prefs);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -39,6 +26,9 @@ export const SettingsPanel: React.FC = () => {
             Customize assistant identity, voice engine, security parameters, and wake word.
           </p>
         </div>
+        {isLoading && (
+          <span className="text-xs font-mono text-cyan-400">Loading from cloud...</span>
+        )}
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">

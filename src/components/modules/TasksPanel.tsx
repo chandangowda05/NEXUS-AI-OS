@@ -1,48 +1,16 @@
 import React, { useState } from 'react';
-import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CheckSquare, Plus, Clock, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { TaskItem } from '../../types/assistant';
+import { useSupabaseTasks } from '../../hooks/useSupabaseTasks';
 
 export const TasksPanel: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskItem[]>([
-    {
-      id: 'task-1',
-      title: 'Initialize Core Voice & NLP Brain Pipeline',
-      category: 'SYSTEM',
-      status: 'IN_PROGRESS',
-      priority: 'HIGH',
-      createdAt: 'Today, 19:00'
-    },
-    {
-      id: 'task-2',
-      title: 'Configure Windows Native System Controls',
-      category: 'SYSTEM',
-      status: 'PENDING',
-      priority: 'HIGH',
-      createdAt: 'Today, 19:15'
-    },
-    {
-      id: 'task-3',
-      title: 'Review System Design - Scalable Microservices & Kafka',
-      category: 'STUDY',
-      status: 'PENDING',
-      priority: 'MEDIUM',
-      createdAt: 'Yesterday'
-    },
-    {
-      id: 'task-4',
-      title: 'Setup SQLite Vector Embeddings Table',
-      category: 'CODING',
-      status: 'COMPLETED',
-      priority: 'HIGH',
-      createdAt: 'Today, 18:30'
-    }
-  ]);
+  const { tasks, addTask, toggleTaskStatus, removeTask, isLoading } = useSupabaseTasks();
 
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState<TaskItem['category']>('CODING');
   const [newPriority, setNewPriority] = useState<TaskItem['priority']>('MEDIUM');
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
     const task: TaskItem = {
@@ -53,21 +21,8 @@ export const TasksPanel: React.FC = () => {
       priority: newPriority,
       createdAt: 'Just now'
     };
-    setTasks([task, ...tasks]);
+    await addTask(task);
     setNewTitle('');
-  };
-
-  const toggleTaskStatus = (id: string) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status: t.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
-            }
-          : t
-      )
-    );
   };
 
   return (
@@ -81,6 +36,9 @@ export const TasksPanel: React.FC = () => {
             Track assistant background routines, coding tasks, and daily study schedules.
           </p>
         </div>
+        {isLoading && (
+          <span className="text-xs font-mono text-cyan-400">Loading...</span>
+        )}
       </div>
 
       {/* Add Task */}
@@ -126,14 +84,16 @@ export const TasksPanel: React.FC = () => {
         {tasks.map((task) => (
           <div
             key={task.id}
-            onClick={() => toggleTaskStatus(task.id)}
-            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all group ${
               task.status === 'COMPLETED'
                 ? 'bg-slate-950/40 border-slate-800 opacity-60'
                 : 'bg-slate-900/70 border-slate-800 hover:border-cyan-500/40'
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-3 flex-1"
+              onClick={() => toggleTaskStatus(task.id)}
+            >
               {task.status === 'COMPLETED' ? (
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
               ) : (
@@ -161,7 +121,19 @@ export const TasksPanel: React.FC = () => {
                 </div>
               </div>
             </div>
-            <span className="text-[10px] font-mono text-slate-500">{task.createdAt}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-slate-500">{task.createdAt}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeTask(task.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-rose-950/40 text-slate-500 hover:text-rose-400"
+                aria-label="Delete task"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         ))}
       </div>

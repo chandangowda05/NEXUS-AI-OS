@@ -1,49 +1,17 @@
 import React, { useState } from 'react';
-import { Brain, Search, Plus, Sparkles, Tag, Clock, Database } from 'lucide-react';
+import { Brain, Search, Plus, Sparkles, Tag, Clock, Database, Trash2 } from 'lucide-react';
 import { MemoryEntry } from '../../types/assistant';
+import { useSupabaseMemory } from '../../hooks/useSupabaseMemory';
 
 export const MemoryPanel: React.FC = () => {
   const [search, setSearch] = useState('');
-  const [memories, setMemories] = useState<MemoryEntry[]>([
-    {
-      id: 'mem-1',
-      category: 'GOAL',
-      key: 'Primary Objective',
-      value: 'Build world-class AI Assistant (Project Phoenix)',
-      confidence: 1.0,
-      updatedAt: 'Just now'
-    },
-    {
-      id: 'mem-2',
-      category: 'PREFERENCE',
-      key: 'UI Aesthetic',
-      value: 'Obsidian dark, cyan glowing glassmorphic interface with blue holographic orb',
-      confidence: 0.98,
-      updatedAt: 'Today, 19:30'
-    },
-    {
-      id: 'mem-3',
-      category: 'PROJECT',
-      key: 'Active Repository',
-      value: 'g:/jarvis (Electron + React + TypeScript + SQLite)',
-      confidence: 1.0,
-      updatedAt: 'Today, 19:32'
-    },
-    {
-      id: 'mem-4',
-      category: 'HABIT',
-      key: 'Coding Language Preference',
-      value: 'TypeScript, Python, Java, System Design, DSA',
-      confidence: 0.95,
-      updatedAt: 'Yesterday'
-    }
-  ]);
+  const { memories, addMemory, removeMemory, isLoading } = useSupabaseMemory();
 
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
   const [newCategory, setNewCategory] = useState<MemoryEntry['category']>('PREFERENCE');
 
-  const handleAddMemory = (e: React.FormEvent) => {
+  const handleAddMemory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKey || !newValue) return;
     const entry: MemoryEntry = {
@@ -54,7 +22,7 @@ export const MemoryPanel: React.FC = () => {
       confidence: 1.0,
       updatedAt: 'Just now'
     };
-    setMemories([entry, ...memories]);
+    await addMemory(entry);
     setNewKey('');
     setNewValue('');
   };
@@ -80,7 +48,9 @@ export const MemoryPanel: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 bg-cyan-950/40 border border-cyan-500/30 px-3 py-1.5 rounded-xl">
           <Database className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-mono text-cyan-300">{memories.length} Key-Values Indexed</span>
+          <span className="text-xs font-mono text-cyan-300">
+            {isLoading ? 'Loading...' : `${memories.length} Key-Values Indexed`}
+          </span>
         </div>
       </div>
 
@@ -136,14 +106,26 @@ export const MemoryPanel: React.FC = () => {
       {/* Memory Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((mem) => (
-          <div key={mem.id} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 transition-all">
+          <div key={mem.id} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-cyan-500/40 transition-all group">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 flex items-center gap-1">
                 <Tag className="w-3 h-3" /> {mem.category}
               </span>
-              <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {mem.updatedAt}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {mem.updatedAt}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeMemory(mem.id);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-rose-950/40 text-slate-500 hover:text-rose-400"
+                  aria-label="Delete memory entry"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             <h4 className="text-xs font-bold text-slate-200">{mem.key}</h4>
             <p className="text-xs text-slate-400 mt-1 font-mono">{mem.value}</p>
